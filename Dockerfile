@@ -7,7 +7,7 @@ WORKDIR /app
 
 # COPY app.py requirements.txt tailwind.config.js .deepsource.toml LICENSE static/ templates/ /app/
 
-COPY . .
+COPY src/* /app/
 
 RUN apt update && apt install pip -y
 
