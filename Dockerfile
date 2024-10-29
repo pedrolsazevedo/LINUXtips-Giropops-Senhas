@@ -1,8 +1,11 @@
 FROM python:3.9.20-bookworm
 
 LABEL MAINTAINER="PEDROLSAZEVEDO@GMAIL.COM"
+LABEL SOURCE="https://github.com/pedrolsazevedo/LINUXtips-Giropops-Senhas"
 
 WORKDIR /app
+
+# COPY app.py requirements.txt tailwind.config.js .deepsource.toml LICENSE static/ templates/ /app/
 
 COPY . .
 
