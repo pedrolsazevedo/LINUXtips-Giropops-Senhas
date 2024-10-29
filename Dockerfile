@@ -13,8 +13,13 @@ RUN apt update && apt install pip -y
 
 RUN pip install --no-cache -r requirements.txt
 
-EXPOSE 80
+ENV PORT=5000
+
+EXPOSE 5000
 
 ENTRYPOINT [ "flask" ]
 
 CMD [ "run",  "--host=0.0.0.0" ]
+
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
+  CMD curl -f localhost:5000 || exit 1
