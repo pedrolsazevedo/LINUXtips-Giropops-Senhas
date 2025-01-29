@@ -1,0 +1,70 @@
+name: Commitizen Bump version
+
+on:
+  workflow_call: 
+  push:
+    branches:
+      - main
+
+env:
+  IMAGE_NAMESPACE: "psazevedo"
+  IMAGE_NAME: ${{ github.event.repository.name }}
+
+jobs:
+  vault:
+    runs-on: ubuntu-latest
+    name: "Get Dockerhub credentials from Hashicorp Vault"
+    steps:
+      - name: Get Dockerhub credentials
+        uses: hashicorp/vault-action@v3
+        with:
+          url: ${{ secrets.VAULT_ADDR }}
+          token: ${{ secrets.VAULT_TOKEN }}
+          secrets: |
+            - dockerhub/username
+            - dockerhub/token
+      - name: Set Dockerhub credentials
+        run: |
+          echo "DOCKERHUB_USERNAME=${{ secrets.dockerhub_username }}" >> $GITHUB_ENV
+          echo "DOCKERHUB_TOKEN=${{ secrets.dockerhub_token }}" >> $GITHUB_ENV
+
+  bump_version:
+    if: "!startsWith(github.event.head_commit.message, 'bump:')"
+    runs-on: ubuntu-latest
+    environment: release
+    name: "Bump version and create changelog with commitizen"
+    outputs:
+      bump_version: ${{ steps.cz.outputs.version }}
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: "${{ secrets.GITHUB_TOKEN }}"
+      - id: cz
+        name: Create bump and changelog
+        uses: commitizen-tools/commitizen-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Print Version
+        run: echo "Bumped to version ${{ steps.cz.outputs.version }}"
+  docker:
+    runs-on: ubuntu-latest
+    needs: bump_version
+    name: "Build and push Docker image"
+    environment: release
+    steps:
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          push: true
+          tags: user/app:latest
