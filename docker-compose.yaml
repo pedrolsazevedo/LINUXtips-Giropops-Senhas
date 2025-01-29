@@ -9,7 +9,7 @@ services:
   giropops-web:
     depends_on:
       - redis
-    image: psazevedo/linuxtips-giropops-senhas:1.0
+    image: psazevedo/linuxtips-giropops-senhas:1.1-distroless
     container_name: giropops-senhas
     hostname: giropops-senhas
     ports:
